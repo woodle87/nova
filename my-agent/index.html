@@ -1,0 +1,39 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Agent</title>
+<style>
+  body{font-family:system-ui;max-width:640px;margin:2rem auto;padding:0 1rem}
+  #log{border:1px solid #ccc;border-radius:8px;padding:1rem;height:55vh;overflow:auto}
+  .u{color:#06c;margin:.5rem 0}.a{margin:.5rem 0}
+  input{padding:.6rem;width:100%;box-sizing:border-box;margin-top:.5rem}
+</style>
+<h2>My Agent</h2>
+<input id="tok" type="password" placeholder="Access token">
+<div id="log"></div>
+<input id="msg" placeholder="Type a message and press Enter">
+<script>
+  const sid = localStorage.sid ||= crypto.randomUUID();
+  const log = document.getElementById("log");
+  const add = (cls, t) => {
+    const d = document.createElement("div");
+    d.className = cls; d.textContent = t;
+    log.append(d); log.scrollTop = log.scrollHeight;
+  };
+  document.getElementById("msg").addEventListener("keydown", async (e) => {
+    if (e.key !== "Enter" || !e.target.value.trim()) return;
+    const prompt = e.target.value; e.target.value = "";
+    add("u", "You: " + prompt);
+    try {
+      const r = await fetch("/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + document.getElementById("tok").value,
+        },
+        body: JSON.stringify({ prompt, sid }),
+      });
+      const j = await r.json();
+      add("a", "Agent: " + (j.reply ?? j.error));
+    } catch (err) { add("a", "Error: " + err.message); }
+  });
+</script>
